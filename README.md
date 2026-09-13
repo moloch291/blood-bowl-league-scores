@@ -1,1 +1,1 @@
-Tournament tracker for the Scoreboard app
+Backend to interact with database pod and pass info to the scoreboard.
