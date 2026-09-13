@@ -56,6 +56,64 @@ app.get('/api/conferences', async (req, res) => {
   }
 });
 
+const conferences = {
+  'great-ocean': 'great_ocean_conference',
+  'old-world': 'old_world_conference',
+};
+
+app.patch('/api/conferences/:conference/:teamName', async (req, res) => {
+  const table = conferences[req.params.conference];
+
+  if (!table) {
+    return res.status(404).json({
+      error: 'Conference not found',
+    });
+  }
+
+  const {
+    points,
+    touchdowns,
+    casualties,
+    games_played,
+  } = req.body;
+
+  try {
+    const result = await pool.query(
+      `
+      UPDATE ${table}
+      SET
+        points = COALESCE($1, points),
+        touchdowns = COALESCE($2, touchdowns),
+        casualties = COALESCE($3, casualties),
+        games_played = COALESCE($4, games_played)
+      WHERE team_name = $5
+      RETURNING *
+      `,
+      [
+        points,
+        touchdowns,
+        casualties,
+        games_played,
+        req.params.teamName,
+      ]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        error: 'Team not found',
+      });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      error: 'Failed to update team',
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Blood Bowl API running on http://localhost:${PORT}`);
 });

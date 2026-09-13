@@ -18,3 +18,5 @@ services:
 
 volumes:
   blood_bowl_postgres_data:
+    external: true
+    name: blood-bowl-league-scores_blood_bowl_postgres_data
