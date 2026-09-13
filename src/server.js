@@ -114,6 +114,72 @@ app.patch('/api/conferences/:conference/:teamName', async (req, res) => {
   }
 });
 
+app.post('/api/conferences/:conference/results', async (req, res) => {
+  const table = conferences[req.params.conference];
+
+  if (!table) {
+    return res.status(404).json({
+      error: 'Conference not found',
+    });
+  }
+
+  const {
+    teamName,
+    points,
+    touchdowns,
+    casualties,
+  } = req.body;
+
+  if (
+    typeof teamName !== 'string' ||
+    !Number.isInteger(points) ||
+    !Number.isInteger(touchdowns) ||
+    !Number.isInteger(casualties) ||
+    points < 0 ||
+    touchdowns < 0 ||
+    casualties < 0
+  ) {
+    return res.status(400).json({
+      error: 'Invalid result data',
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      `
+      UPDATE ${table}
+      SET
+        points = points + $1,
+        touchdowns = touchdowns + $2,
+        casualties = casualties + $3,
+        games_played = games_played + 1
+      WHERE team_name = $4
+      RETURNING *
+      `,
+      [
+        points,
+        touchdowns,
+        casualties,
+        teamName,
+      ]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        error: 'Team not found',
+      });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      error: 'Failed to add game result',
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Blood Bowl API running on http://localhost:${PORT}`);
 });
