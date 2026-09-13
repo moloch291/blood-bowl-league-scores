@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: blood-bowl-postgres
+
+    environment:
+      POSTGRES_DB: blood_bowl_league
+      POSTGRES_USER: blood_bowl
+      POSTGRES_PASSWORD: development
+
+    ports:
+      - "5433:5432"
+
+    volumes:
+      - blood_bowl_postgres_data:/var/lib/postgresql/data
+
+    restart: unless-stopped
+
+volumes:
+  blood_bowl_postgres_data:
